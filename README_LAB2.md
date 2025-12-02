@@ -105,3 +105,4 @@ flutter run
    - Провери Settings → Notifications → Meal App (на симулатор)
    - За тестирање, промени го времето во `notification_service.dart`
 
+
