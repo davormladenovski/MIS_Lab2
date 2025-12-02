@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/meal.dart';
 import '../services/meal_service.dart';
+import '../widgets/meal_card.dart';
 import 'recipe_detail_screen.dart';
 
 class MealsScreen extends StatefulWidget {
@@ -114,43 +115,18 @@ class _MealsScreenState extends State<MealsScreen> {
                           itemCount: _filteredMeals.length,
                           itemBuilder: (context, index) {
                             final meal = _filteredMeals[index];
-                            return Card(
-                              child: InkWell(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => RecipeDetailScreen(
-                                        mealId: meal.idMeal,
-                                      ),
+                            return MealCard(
+                              meal: meal,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => RecipeDetailScreen(
+                                      mealId: meal.idMeal,
                                     ),
-                                  );
-                                },
-                                child: Column(
-                                  children: [
-                                    Expanded(
-                                      child: Image.network(
-                                        meal.strMealThumb,
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return const Icon(Icons.image, size: 50);
-                                        },
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                        meal.strMeal,
-                                        style: const TextStyle(fontWeight: FontWeight.bold),
-                                        textAlign: TextAlign.center,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                                  ),
+                                );
+                              },
                             );
                           },
                         ),

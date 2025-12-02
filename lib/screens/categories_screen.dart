@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/category.dart';
 import '../services/meal_service.dart';
+import '../services/notification_service.dart';
 import 'meals_screen.dart';
 import 'recipe_detail_screen.dart';
+import 'favorites_screen.dart';
 
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key});
@@ -53,6 +55,33 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     }
   }
 
+  Future<void> _testNotification() async {
+    final notificationService = NotificationService();
+    try {
+      // Прикажи нотификација со рандом рецепт
+      final recipe = await _mealService.getRandomRecipe();
+      await notificationService.showDailyRecipeNotification(recipe.strMeal);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Нотификацијата е испратена! Провери го горниот дел од екранот.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Грешка: $e'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
   List<Category> get _filteredCategories {
     if (_searchText.isEmpty) {
       return _categories;
@@ -68,6 +97,22 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       appBar: AppBar(
         title: const Text('Meal Categories'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            tooltip: 'Тестирај нотификација',
+            onPressed: _testNotification,
+          ),
+          IconButton(
+            icon: const Icon(Icons.favorite),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const FavoritesScreen(),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.shuffle),
             onPressed: _showRandomRecipe,

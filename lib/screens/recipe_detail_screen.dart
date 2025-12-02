@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/recipe.dart';
 import '../services/meal_service.dart';
+import '../services/favorites_service.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe? recipe;
@@ -19,8 +20,11 @@ class RecipeDetailScreen extends StatefulWidget {
 
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   final MealService _mealService = MealService();
+  final FavoritesService _favoritesService = FavoritesService();
   Recipe? _recipe;
   bool _isLoading = true;
+  bool _isFavorite = false;
+  bool _isLoadingFavorite = false;
 
   @override
   void initState() {
@@ -28,8 +32,64 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     if (widget.recipe != null) {
       _recipe = widget.recipe;
       _isLoading = false;
+      _checkFavoriteStatus();
     } else if (widget.mealId != null) {
       _loadRecipe();
+    }
+  }
+
+  Future<void> _checkFavoriteStatus() async {
+    if (_recipe != null) {
+      final isFav = await _favoritesService.isFavorite(_recipe!.idMeal);
+      setState(() {
+        _isFavorite = isFav;
+      });
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (_recipe == null) return;
+
+    setState(() {
+      _isLoadingFavorite = true;
+    });
+
+    try {
+      if (_isFavorite) {
+        await _favoritesService.removeFavorite(_recipe!.idMeal);
+      } else {
+        await _favoritesService.addFavorite(_recipe!);
+      }
+      
+      setState(() {
+        _isFavorite = !_isFavorite;
+        _isLoadingFavorite = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _isFavorite 
+                ? 'Додадено во омилени' 
+                : 'Отстрането од омилени',
+            ),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isLoadingFavorite = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Грешка при зачувување'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
@@ -40,6 +100,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         _recipe = recipe;
         _isLoading = false;
       });
+      _checkFavoriteStatus();
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -75,6 +136,21 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Recipe Details'),
+        actions: [
+          IconButton(
+            icon: _isLoadingFavorite
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Icon(
+                    _isFavorite ? Icons.favorite : Icons.favorite_border,
+                    color: _isFavorite ? Colors.red : null,
+                  ),
+            onPressed: _toggleFavorite,
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
